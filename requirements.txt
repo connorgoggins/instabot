@@ -1,5 +1,5 @@
 ipapi==0.5.2
 requests==2.18.4
 Faker==0.8.10
-mysql==0.0.1
-mysql-connector-python-rf==2.2.2
+MySQL-python==1.2.5
+SQLAlchemy==1.2.2

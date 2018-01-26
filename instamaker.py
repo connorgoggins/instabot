@@ -22,6 +22,10 @@ import mysql.connector
 import ipapi
 import time
 import utils
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine
+engine = create_engine('mysql+mysqlconnector://username:password@localhost:3307/dbname')
+Session = sessionmaker(bind=engine)
 
 
 def HMAC(text):
@@ -109,6 +113,7 @@ def create(name, username, email, password):
             cnx.close()
 
 def main():
+
 
     while True:
         full_name = fake.name()
