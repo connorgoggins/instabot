@@ -23,6 +23,10 @@ import ipapi
 import time
 import utils
 
+cnx = utils.get_db_connection()
+cursor = cnx.cursor()
+
+
 def HMAC(text):
     key = '3f0a7d75e094c7385e3dbaa026877f2e067cbd1a4dbcf3867748f6b26f257117'
     hash = hmac.new(key,msg=text,digestmod=hashlib.sha256)
@@ -76,7 +80,7 @@ def create(name, username, email, password, cursor):
             add_user = ("INSERT INTO users (full_name, username, user_email, password) VALUES (\"%s\", \"%s\", \"%s\", \"%s\")")
             data_user = (name, username, email, password)
             cursor.execute(add_user, data_user)
-
+            cnx.commit()
         else:
             print 'Error:'
             for i in result['errors']:
@@ -87,15 +91,15 @@ def create(name, username, email, password, cursor):
 
             ip = ipapi.location(None, None, "ip")
 
-            ip = ip[2:-1]
+            ip = str(ip)
+            print("setting to blocked ip: "+ip)
 
             add_vm = ("UPDATE vms SET blocked=1 WHERE ip=\"%s\"")
             data_vm = (ip)
             cursor.execute(add_vm, data_vm)
+            cnx.commit()
 
 def main():
-    cnx = utils.get_db_connection()
-    cursor = cnx.cursor()
 
     while True:
         full_name = fake.name()
