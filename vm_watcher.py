@@ -56,16 +56,10 @@ def create_vm():
         ip = ""
         blocked = "0"
 
-        cnx = utils.get_db_connection()
-        cursor = cnx.cursor()
-
-        add_vm = ("INSERT INTO vms (ip, rancher_id, blocked) VALUES (\"%s\", \"%s\", %s)")
-        data_vm = (ip, rancher_id, blocked)
-        cursor.execute(add_vm, data_vm)
-        cnx.commit()
-
-        cursor.close()
-        cnx.close()
+        vm = VM(ip=ip, rancher_id=rancher_id, blocked=False)
+        session = Session()
+        session.add(vm)
+        session.commit()
     return
 
 def delete_vm(rancher_id):
@@ -79,35 +73,25 @@ def delete_vm(rancher_id):
     if r.status_code == 200:
         # ONLY DELETE FROM DB only if RANCHER RETURNS 200
         # DELETE FROM vms WHERE rancher_id = rancher_id
-        cnx = utils.get_db_connection()
-        cursor = cnx.cursor()
-
-        query = ("DELETE FROM vms WHERE rancher_id='" + rancher_id+"'")
-        cursor.execute(query)
-        cnx.commit()
-
-        cursor.close()
-        cnx.close()
+        session = Session()
+        session.query(VM).filter_by(rancher_id=rancher_id).delete()
+        session.commit()
         return None
     else:
         return "Error deleting vm with rancher_id: "+str(rancher_id)
 
 
 def update_vms_without_ip():
-    cnx = utils.get_db_connection()
-    cursor = cnx.cursor()
+    session = Session()
+    vms = session.query(VM).filter_by(ip="").all()
+    session.commit()
 
-    query = ("SELECT ip, rancher_id FROM vms WHERE ip=''")
-    cursor.execute(query)
-    for (blank_ip, rancher_id) in cursor:
-        ip, err = get_rancher_vm_ip(rancher_id)
+    for vm in vms:
+        ip, err = get_rancher_vm_ip(vm.rancher_id)
         if err == None:
             set_vm_ip(rancher_id, ip)
         else:
             print(err)
-
-    cursor.close()
-    cnx.close()
 
 def get_rancher_vm_ip(rancher_id):
     # DELETE Request to rancher
@@ -124,47 +108,34 @@ def get_rancher_vm_ip(rancher_id):
 
 def create_vm_if_empty():
     # SELECT COUNT(*) FROM vms where blocked=0;
-    cnx = utils.get_db_connection()
-    cursor = cnx.cursor()
-    query = ("SELECT COUNT(*) FROM vms WHERE blocked=0")
-    cursor.execute(query)
+    session = Session()
+    count = session.query(VM).filter_by(blocked=False).count()
+    session.commit()
 
-    for result in cursor:
-        if result[0] < 1:
-            create_vm()
-
-    cursor.close()
-    cnx.close()
+    if count < 1:
+        create_vm()
 
 def set_vm_ip(rancher_id, ip):
-    cnx = utils.get_db_connection()
-    cursor = cnx.cursor()
-    update_vm = ("UPDATE vms SET ip=\"%s\" WHERE rancher_id=\"%s\"")
-    data_vm = (ip, rancher_id)
-    cursor.execute(update_vm, data_vm)
-    cnx.commit()
+    session = Session()
+    vm = session.query(VM).filter_by(rancher_id=rancher_id).first()
+    vm.ip = ip
+    session.commit()
 
-    cursor.close()
-    cnx.close()
     return
 
 def check_vms():
     create_vm_if_empty()
-    cnx = utils.get_db_connection()
-    cursor = cnx.cursor()
-    query = ("SELECT * FROM vms WHERE blocked=1")
-    cursor.execute(query)
 
-    for (ip, blocked, rancher_id, vm_name) in cursor:
-        err = delete_vm(rancher_id)
+    session = Session()
+    vms = session.query(VM).filter_by(blocked=True).all()
+    session.commit()
+
+    for vm in vms:
+        err = delete_vm(vm.rancher_id)
         if err == None:
             create_vm()
         else:
             print("Failed to delete vm")
-
-    cursor.close()
-    cnx.close()
-
 
 def main():
 
