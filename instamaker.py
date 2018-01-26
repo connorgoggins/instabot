@@ -21,6 +21,7 @@ fake = Faker()
 import mysql.connector
 import ipapi
 import time
+import utils
 
 def HMAC(text):
     key = '3f0a7d75e094c7385e3dbaa026877f2e067cbd1a4dbcf3867748f6b26f257117'
@@ -93,7 +94,7 @@ def create(name, username, email, password, cursor):
             cursor.execute(add_vm, data_vm)
 
 def main():
-    cnx = mysql.connector.connect(user='instamakeruser', password='instabot', host='127.0.0.1', port='3307', database='instamaker')
+    cnx = utils.get_db_connection()
     cursor = cnx.cursor()
 
     while True:

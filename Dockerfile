@@ -1,6 +1,9 @@
 FROM python:2.7
-
-ADD . /app
+ADD requirements.txt /app/
 WORKDIR /app
 RUN pip install -r requirements.txt
+
+ADD . /app
+
+
 
