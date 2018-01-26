@@ -169,5 +169,5 @@ def main():
 
 
 if __name__ == '__main__':
-    delete_vm("test")
-    # main()
+    # delete_vm("test")
+    main()

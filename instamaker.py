@@ -44,7 +44,7 @@ def banner():
 
 
 
-def create(name, username, email, password, cursor):
+def create(name, username, email, password):
     params = {'name': name, 'username': username, 'email': email, 'password': password}
 
     getHeaders = {'User-Agent':'Instagram 7.1.1 Android (21/5.0.2; 480dpi; 1080x1776; LGE/Google; Nexus 5; hammerhead; hammerhead; en_US)',
@@ -117,7 +117,7 @@ def main():
         pwd = "Mypassword1"
         print "Creating..."
         print full_name, user_name, user_email, pwd
-        create(full_name, user_name, user_email, pwd, cursor)
+        create(full_name, user_name, user_email, pwd)
         print "Sleeping..."
         time.sleep(15)
 
