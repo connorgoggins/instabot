@@ -23,9 +23,6 @@ import ipapi
 import time
 import utils
 
-cnx = utils.get_db_connection()
-cursor = cnx.cursor()
-
 
 def HMAC(text):
     key = '3f0a7d75e094c7385e3dbaa026877f2e067cbd1a4dbcf3867748f6b26f257117'
@@ -77,10 +74,16 @@ def create(name, username, email, password, cursor):
         if result['account_created'] == True:
             print 'Account has been created successfully'
 
+            cnx = utils.get_db_connection()
+            cursor = cnx.cursor()
+
             add_user = ("INSERT INTO users (full_name, username, user_email, password) VALUES (\"%s\", \"%s\", \"%s\", \"%s\")")
             data_user = (name, username, email, password)
             cursor.execute(add_user, data_user)
             cnx.commit()
+
+            cursor.close()
+            cnx.close()
         else:
             print 'Error:'
             for i in result['errors']:
@@ -94,10 +97,16 @@ def create(name, username, email, password, cursor):
             ip = str(ip)
             print("setting to blocked ip: "+ip)
 
+            cnx = utils.get_db_connection()
+            cursor = cnx.cursor()
+
             add_vm = ("UPDATE vms SET blocked=1 WHERE ip=\"%s\"")
             data_vm = (ip)
             cursor.execute(add_vm, data_vm)
             cnx.commit()
+
+            cursor.close()
+            cnx.close()
 
 def main():
 
@@ -112,8 +121,7 @@ def main():
         print "Sleeping..."
         time.sleep(15)
 
-    cursor.close()
-    cnx.close()
+
 
 # schema
 # full_name VARCHAR (50) NOT NULL, user_name VARCHAR (50) NOT NULL, user_email VARCHAR(50) NOT NULL, password VARCHAR(50) NOT NULL

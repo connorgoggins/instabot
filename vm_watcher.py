@@ -5,8 +5,6 @@ import requests
 import utils
 from requests.auth import HTTPBasicAuth
 
-cnx = utils.get_db_connection()
-cursor = cnx.cursor()
 
 def create_vm():
     # POST rancher
@@ -49,10 +47,16 @@ def create_vm():
         ip = ""
         blocked = "0"
 
+        cnx = utils.get_db_connection()
+        cursor = cnx.cursor()
+
         add_vm = ("INSERT INTO vms (ip, rancher_id, blocked) VALUES (\"%s\", \"%s\", %s)")
         data_vm = (ip, rancher_id, blocked)
         cursor.execute(add_vm, data_vm)
         cnx.commit()
+
+        cursor.close()
+        cnx.close()
     return
 
 def delete_vm(rancher_id):
@@ -60,21 +64,30 @@ def delete_vm(rancher_id):
     delete_vm_url = "https://try.rancher.com/v2-beta/projects/1a1065894/hosts/"+rancher_id
     rancher_creds = utils.get_rancher_creds()
     r = requests.delete(
-        delete_vm_url, 
+        delete_vm_url,
         auth=HTTPBasicAuth(rancher_creds["username"], rancher_creds["password"]),
     )
     if r.status_code == 200:
         # ONLY DELETE FROM DB only if RANCHER RETURNS 200
         # DELETE FROM vms WHERE rancher_id = rancher_id
+        cnx = utils.get_db_connection()
+        cursor = cnx.cursor()
+
         query = ("DELETE FROM vms WHERE rancher_id='" + rancher_id+"'")
         cursor.execute(query)
-        cnx.commit()   
+        cnx.commit()
+
+        cursor.close()
+        cnx.close()
         return None
     else:
         return "Error deleting vm with rancher_id: "+str(rancher_id)
-    
+
 
 def update_vms_without_ip():
+    cnx = utils.get_db_connection()
+    cursor = cnx.cursor()
+
     query = ("SELECT ip, rancher_id FROM vms WHERE ip=''")
     cursor.execute(query)
     for (blank_ip, rancher_id) in cursor:
@@ -84,12 +97,15 @@ def update_vms_without_ip():
         else
             print(err)
 
+    cursor.close()
+    cnx.close()
+
 def get_rancher_vm_ip(rancher_id):
     # DELETE Request to rancher
     rancher_vm_url = "https://try.rancher.com/v2-beta/projects/1a1065894/hosts/"+rancher_id
     rancher_creds = utils.get_rancher_creds()
     r = requests.get(
-        rancher_vm_url, 
+        rancher_vm_url,
         auth=HTTPBasicAuth(rancher_creds["username"], rancher_creds["password"]),
     )
     if r.status_code == 200:
@@ -99,6 +115,8 @@ def get_rancher_vm_ip(rancher_id):
 
 def create_vm_if_empty():
     # SELECT COUNT(*) FROM vms where blocked=0;
+    cnx = utils.get_db_connection()
+    cursor = cnx.cursor()
     query = ("SELECT COUNT(*) FROM vms WHERE blocked=0")
     cursor.execute(query)
 
@@ -106,15 +124,25 @@ def create_vm_if_empty():
         if result[0] < 1:
             create_vm()
 
+    cursor.close()
+    cnx.close()
+
 def set_vm_ip(rancher_id, ip):
+    cnx = utils.get_db_connection()
+    cursor = cnx.cursor()
     update_vm = ("UPDATE vms SET ip=\"%s\" WHERE rancher_id=\"%s\"")
     data_vm = (ip, rancher_id)
     cursor.execute(update_vm, data_vm)
     cnx.commit()
+
+    cursor.close()
+    cnx.close()
     return
 
 def check_vms():
     create_vm_if_empty()
+    cnx = utils.get_db_connection()
+    cursor = cnx.cursor()
     query = ("SELECT * FROM vms WHERE blocked=1")
     cursor.execute(query)
 
@@ -125,9 +153,12 @@ def check_vms():
         else:
             print("Failed to delete vm")
 
+    cursor.close()
+    cnx.close()
+
 
 def main():
-    
+
     while True:
         print("Checking vms...")
         check_vms()
