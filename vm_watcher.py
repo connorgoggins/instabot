@@ -5,7 +5,7 @@ import requests
 import utils
 from requests.auth import HTTPBasicAuth
 
-def create_vm():
+def create_vm(cursor):
     # POST rancher
     DO_TOKEN = os.getenv("DO_TOKEN", "")
     create_vm_payload = {
@@ -26,7 +26,7 @@ def create_vm():
         "engineInstallUrl": "https://releases.rancher.com/install-docker/1.12.sh",
         "hostname": "dev-3",
         "labels": {
-            "app": "vm_watcher"
+            "app": "instamaker"
         }
     }
 
@@ -52,12 +52,48 @@ def create_vm():
 
     return
 
-def delete_vm(rancher_id):
+def delete_vm(cursor, rancher_id):
     # DELETE Request to rancher
-
-    # ONLY DELETE FROM DB only if RANCHER RETURNS 200
-    # DELETE FROM vms WHERE rancher_id = rancher_id
+    delete_vm_url = "https://try.rancher.com/v2-beta/projects/1a1065894/hosts/"+rancher_id
+    rancher_creds = utils.get_rancher_creds()
+    r = requests.delete(
+        delete_vm_url, 
+        auth=HTTPBasicAuth(rancher_creds["username"], rancher_creds["password"]),
+    )
+    if r.status_code == 200:
+        # ONLY DELETE FROM DB only if RANCHER RETURNS 200
+        # DELETE FROM vms WHERE rancher_id = rancher_id
+    else:
+        return "Error deleting vm with rancher_id: "+str(rancher_id)
     return None
+
+def update_vms_without_ip():
+    cnx = utils.get_db_connection()
+    cursor = cnx.cursor()
+
+    query = ("SELECT ip, rancher_id FROM vms WHERE ip=''")
+    cursor.execute(query)
+
+    for (ip, rancher_id) in cursor:
+        ip, err = get_rancher_vm_ip(rancher_id)
+        if err == None:
+            set_vm_ip(rancher_id)
+        else
+            print(err)
+
+
+def get_rancher_vm_ip(rancher_id):
+    # DELETE Request to rancher
+    rancher_vm_url = "https://try.rancher.com/v2-beta/projects/1a1065894/hosts/"+rancher_id
+    rancher_creds = utils.get_rancher_creds()
+    r = requests.get(
+        rancher_vm_url, 
+        auth=HTTPBasicAuth(rancher_creds["username"], rancher_creds["password"]),
+    )
+    if r.status_code == 200:
+       return (r.json()["agentIpAddress"], None)
+    else:
+        return ("", "Cannot get vm with rancher_id: "+str(rancher_id))
 
 def create_vm_if_empty():
     # SELECT COUNT(*) FROM vms where blocked=0;
@@ -69,7 +105,7 @@ def create_vm_if_empty():
 
     for result in cursor:
         if result[0] < 1:
-            create_vm()
+            create_vm(cursor)
 
     cursor.close()
     cnx.close()
@@ -84,9 +120,9 @@ def check_vms():
     cursor.execute(query)
 
     for (ip, blocked, rancher_id, vm_name) in cursor:
-        err = delete_vm(rancher_id)
+        err = delete_vm(cursor, rancher_id)
         if err == None:
-            create_vm()
+            create_vm(cursor)
         else:
             print("Failed to delete vm")
 
