@@ -18,15 +18,19 @@ import argparse
 import socket
 from faker import Faker
 fake = Faker()
-import mysql.connector
 import ipapi
 import time
-import utils
+
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
-engine = create_engine('mysql+mysqlconnector://username:password@localhost:3307/dbname')
+import os
+
+DB_HOST = os.getenv("MYSQL_HOST", "127.0.0.1:3307")
+engine = create_engine('mysql+mysqldb://instamakeruser:instabot@' +DB_HOST+'/instamaker')
 Session = sessionmaker(bind=engine)
 
+from user import User
+from vm import VM
 
 def HMAC(text):
     key = '3f0a7d75e094c7385e3dbaa026877f2e067cbd1a4dbcf3867748f6b26f257117'
@@ -77,17 +81,10 @@ def create(name, username, email, password):
     if result['status'] != 'fail':
         if result['account_created'] == True:
             print 'Account has been created successfully'
-
-            cnx = utils.get_db_connection()
-            cursor = cnx.cursor()
-
-            add_user = ("INSERT INTO users (full_name, username, user_email, password) VALUES (\"%s\", \"%s\", \"%s\", \"%s\")")
-            data_user = (name, username, email, password)
-            cursor.execute(add_user, data_user)
-            cnx.commit()
-
-            cursor.close()
-            cnx.close()
+            user = User(full_name=name, username=username, password=password, user_email=email)
+            session = Session()
+            session.add(user)
+            session.commit()
         else:
             print 'Error:'
             for i in result['errors']:
@@ -100,17 +97,10 @@ def create(name, username, email, password):
 
             ip = str(ip)
             print("setting to blocked ip: "+ip)
-
-            cnx = utils.get_db_connection()
-            cursor = cnx.cursor()
-
-            add_vm = ("UPDATE vms SET blocked=1 WHERE ip=\"%s\"")
-            data_vm = (ip)
-            cursor.execute(add_vm, data_vm)
-            cnx.commit()
-
-            cursor.close()
-            cnx.close()
+            session = Session()
+            vm = session.query(VM).filter_by(ip=ip).first() 
+            vm.blocked = True
+            session.commit()
 
 def main():
 

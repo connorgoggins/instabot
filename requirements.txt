@@ -3,3 +3,4 @@ requests==2.18.4
 Faker==0.8.10
 MySQL-python==1.2.5
 SQLAlchemy==1.2.2
+mysql==0.0.1
