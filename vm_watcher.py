@@ -6,6 +6,7 @@ from requests.auth import HTTPBasicAuth
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 import os
+import utils
 
 DB_HOST = os.getenv("MYSQL_HOST", "127.0.0.1:3307")
 engine = create_engine('mysql+mysqldb://instamakeruser:instabot@' +DB_HOST+'/instamaker')
@@ -89,7 +90,7 @@ def update_vms_without_ip():
     for vm in vms:
         ip, err = get_rancher_vm_ip(vm.rancher_id)
         if err == None:
-            set_vm_ip(rancher_id, ip)
+            set_vm_ip(vm.rancher_id, ip)
         else:
             print(err)
 
@@ -117,6 +118,8 @@ def create_vm_if_empty():
 
 def set_vm_ip(rancher_id, ip):
     session = Session()
+    if ip == None:
+        ip = ""
     vm = session.query(VM).filter_by(rancher_id=rancher_id).first()
     vm.ip = ip
     session.commit()
