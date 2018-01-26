@@ -1,4 +1,5 @@
 import mysql.connector
+import time
 
 def create_vm():
     # POST rancher
@@ -48,7 +49,11 @@ def check_vms():
     cnx.close()
 
 def main():
-    check_vms()
+    while True:
+        print("Checking vms")
+        check_vms()
+        print("Waiting")
+        time.sleep(180)
 
 if __name__ == '__main__':
     main()
