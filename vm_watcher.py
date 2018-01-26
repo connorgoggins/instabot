@@ -77,7 +77,6 @@ def delete_vm(rancher_id):
 def update_vms_without_ip():
     query = ("SELECT ip, rancher_id FROM vms WHERE ip=''")
     cursor.execute(query)
-
     for (blank_ip, rancher_id) in cursor:
         ip, err = get_rancher_vm_ip(rancher_id)
         if err == None:
@@ -139,4 +138,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    delete_vm("test")
+    # main()
