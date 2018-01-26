@@ -33,8 +33,8 @@ def create_vm():
     create_vm_url = "https://try.rancher.com/v2-beta/projects/1a1065894/host"
     rancher_creds = utils.get_rancher_creds()
     r = requests.post(
-        create_vm_url, 
-        json=create_vm_payload, 
+        create_vm_url,
+        json=create_vm_payload,
         auth=HTTPBasicAuth(rancher_creds["username"], rancher_creds["password"]),
     )
 
@@ -57,6 +57,17 @@ def delete_vm(rancher_id):
 
     # ONLY DELETE FROM DB only if RANCHER RETURNS 200
     # DELETE FROM vms WHERE rancher_id = rancher_id
+    cnx = utils.get_db_connection()
+    cursor = cnx.cursor()
+
+    query = ("DELETE FROM vms WHERE rancher_id='" + rancher_id+"'")
+    cursor.execute(query)
+    print cursor
+    cnx.commit()
+
+    cursor.close()
+    cnx.close()
+
     return None
 
 def create_vm_if_empty():
@@ -103,4 +114,5 @@ def main():
         time.sleep(180)
 
 if __name__ == '__main__':
-    main()
+    delete_vm("test")
+    # main()
