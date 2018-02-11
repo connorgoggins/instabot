@@ -59,9 +59,9 @@ def create_vm():
 
         vm = VM(ip=ip, rancher_id=rancher_id, blocked=False)
         session = Session()
-        if ip != '':
-            session.add(vm)
-            session.commit()
+        #if ip != '':
+        session.add(vm)
+        session.commit()
     return
 
 def delete_vm(rancher_id):
