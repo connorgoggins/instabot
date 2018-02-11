@@ -1,0 +1,4 @@
+MYSQL_ROOT_PASSWORD=instabot
+MYSQL_DATABASE=instamaker
+MYSQL_USER=instamakeruser
+MYSQL_PASSWORD=instabot

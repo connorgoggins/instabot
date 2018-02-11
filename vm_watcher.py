@@ -67,19 +67,27 @@ def delete_vm(rancher_id):
     # DELETE Request to rancher
     delete_vm_url = "https://try.rancher.com/v2-beta/projects/1a1065894/hosts/"+rancher_id
     rancher_creds = utils.get_rancher_creds()
-    r = requests.delete(
-        delete_vm_url,
+    disable_vm_url = delete_vm_url + "?action=deactivate"
+    q = requests.post(
+        disable_vm_url,
         auth=HTTPBasicAuth(rancher_creds["username"], rancher_creds["password"]),
     )
-    if r.status_code == 200:
-        # ONLY DELETE FROM DB only if RANCHER RETURNS 200
-        # DELETE FROM vms WHERE rancher_id = rancher_id
-        session = Session()
-        session.query(VM).filter_by(rancher_id=rancher_id).delete()
-        session.commit()
-        return None
-    else:
-        return "Error deleting vm with rancher_id: "+str(rancher_id)
+
+    if q.status_code == 200:
+        r = requests.delete(
+            delete_vm_url,
+            auth=HTTPBasicAuth(rancher_creds["username"], rancher_creds["password"]),
+        )
+
+        if r.status_code == 200:    
+            # ONLY DELETE FROM DB only if RANCHER RETURNS 200
+            # DELETE FROM vms WHERE rancher_id = rancher_id
+            session = Session()
+            session.query(VM).filter_by(rancher_id=rancher_id).delete()
+            session.commit()
+            return None
+        else:
+            return "Error deleting vm with rancher_id: "+str(rancher_id)
 
 
 def update_vms_without_ip():
