@@ -98,9 +98,10 @@ def create(name, username, email, password):
             ip = str(ip)
             print("setting to blocked ip: "+ip)
             session = Session()
-            vm = session.query(VM).filter_by(ip=ip).first() 
-            vm.blocked = True
-            session.commit()
+            vm = session.query(VM).filter_by(ip=ip).first()
+            if vm:
+                vm.blocked = True
+                session.commit()
 
 def main():
 
